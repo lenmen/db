@@ -7,8 +7,8 @@ This class has a GNU GLP 3 licence
 <h3>How to use</h3>
 
 --- 
-
-   include('class/db.php);
+    // Load the class file
+    include('class/db.php);
 
     // new object
     $con = ['dbname', 'username', 'password'];
