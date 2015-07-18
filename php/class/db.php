@@ -159,12 +159,13 @@ class db extends conf
         }
         
         // Variables for the query
+        $select = (array_key_exists("select", $this->query)) ? $this->query["select"] : 'SELECT *';
         $tbl = (is_null($table)) ? $this->query["from"] : $table;
         $joins = $this->createJoinString();
         $where = $this->createWhereString();
         
         // Create a prepared statement
-        $sql = $this->query["select"] . ' ' . $tbl . $joins . ' ' . $where;
+        $sql = $select . ' ' . $tbl . $joins . ' ' . $where;
         
         try {
             $dbh = parent::prepare($sql);
@@ -188,9 +189,89 @@ class db extends conf
                 $result = $dbh->fetchObject();
             }
             
+            // clear the results
+            unset($dbh);
+            
             return $result;
         } catch (\PDOException $msg) {
             return $msg->getMessage();
+        }
+    }
+    
+    public function get_where($table, $where) {
+        $sql = "select * FROM " .  $table . " WHERE " . $where["clause"];
+        
+        try {
+            $dbh = parent::prepare($sql);
+            
+            if (array_key_exists("params", $where) || is_array($where["params"])) {
+                while ($cur = current($where["params"])) {
+                    $key = key($where["params"]);
+
+                    $dbh->bindParam($key, $where["clause"][$key]);
+
+                    next($where["params"]);
+                }
+            }
+
+            $dbh->execute();
+
+            if($dbh->rowCount() > 1) {
+                $result = $dbh->fetchAll(\PDO::FETCH_ASSOC);
+            } else {
+                // fetch the result
+                $result = $dbh->fetchObject();
+            }
+
+            // clear the results
+            unset($dbh);
+
+            return $result;
+        } catch (\PDOException $ex) {
+            return $ex->getMessage();
+        }  
+    }
+    
+    private function affectedRows($sql, $param) {
+        
+    }
+
+    public function save($sql, $params = null , $multiple = null) {
+        if (!is_array($params)) {
+            throw new \Exception("Parameters needs to be in an array", "500");
+        }
+        
+        try {
+            $dbh = parent::prepare($sql);
+              
+            // bind de parameters
+            while ($run = current($params)) {
+                $key = key($params);
+                
+                echo $key;
+                $dbh->bindParam($key, $params[$key]);
+                
+                next($params);
+            }
+            
+            $dbh->execute();
+            
+            return true;
+        } catch (\PDOException $ex) {
+            return $ex->getMessage();
+        }
+    }
+    
+    public function del($sql, $param) {
+        try {
+            $dbh = parent::prepare($sql);
+            $dbh->bindParam(key($param), $param[key($param)]);
+            $dbh->execute();
+            
+            return true;
+            
+        } catch (\PDOException $ex) {
+            return $ex->getMessage();
         }
     }
 }
