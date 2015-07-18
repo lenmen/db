@@ -231,10 +231,6 @@ class db extends conf
             return $ex->getMessage();
         }  
     }
-    
-    private function affectedRows($sql, $param) {
-        
-    }
 
     public function save($sql, $params = null , $multiple = null) {
         if (!is_array($params)) {
